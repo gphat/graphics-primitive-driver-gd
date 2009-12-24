@@ -20,6 +20,8 @@ my $c = Graphics::Primitive::Canvas->new(
 );
 $c->path->move_to(50, 50);
 $c->path->line_to(20, 0);
+$c->arc(50, 0, 6.28, 1);
+
 $c->do(Graphics::Primitive::Operation::Stroke->new);
 
 my $driver = Graphics::Primitive::Driver::GD->new;

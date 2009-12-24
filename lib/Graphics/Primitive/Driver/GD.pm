@@ -4,6 +4,7 @@ use Moose;
 our $VERSION = '0.01';
 
 use GD;
+use Math::Trig qw(rad2deg);
 
 with 'Graphics::Primitive::Driver';
 
@@ -90,12 +91,15 @@ sub set_style {
     # Sets gdStyled to the dash pattern and sets the color
     my $dash = $brush->dash_pattern;
     my $color = $self->convert_color($brush->color);
+    $self->gd->setAntiAliased($color);
     $self->gd->setThickness($brush->width);
 
     my @dash_style = ();
     if(defined($dash) && scalar(@{ $dash })) {
         foreach my $dc (@{ $dash }) {
             for (0..$dc) {
+                # Try this?
+                # push(@dash_style, ($color) x $dc);
                 push(@dash_style, $color);
             }
         }
@@ -120,10 +124,9 @@ sub _draw_arc {
 
     # No stroke!
     my $gd = $self->gd;
-    $gd->ellipse(
-        $self->current_x, $self->current_y, 10, 0, 180, gdStyled
-        # $self->current_x, $self->current_y, $comp->radius,
-        # $comp->angle_start, $comp->angle_end, $comp->radius, gdStyled
+    $gd->arc(
+        $self->current_x, $self->current_y, $comp->radius, $comp->radius,
+        rad2deg($comp->angle_start), rad2deg($comp->angle_end), gdStyled
     );
 }
 
@@ -246,6 +249,7 @@ sub _draw_line {
     my ($self, $line) = @_;
 
     my $gd = $self->gd;
+
     my $end = $line->end;
     $gd->line($self->current_x, $self->current_y, $end->x, $end->y, gdStyled);
 }
