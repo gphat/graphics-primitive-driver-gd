@@ -7,6 +7,18 @@ use GD;
 
 with 'Graphics::Primitive::Driver';
 
+has 'current_x' => (
+    is => 'rw',
+    isa => 'Num',
+    default => 0
+);
+
+has 'current_y' => (
+    is => 'rw',
+    isa => 'Num',
+    default => 0
+);
+
 has 'gd' => (
     is => 'ro',
     isa => 'GD::Image',
@@ -36,11 +48,32 @@ sub _build_gd {
     return GD::Image->new($self->width, $self->height, 1);
 }
 
+before('draw', sub {
+    my ($self, $comp) = @_;
+
+    my $o = $comp->origin;
+    $self->move_to($o->x, $o->y);
+});
+
 sub data {
     my ($self) = @_;
 
     # XX PNG only?
     return $self->gd->png;
+}
+
+sub move_to {
+    my ($self, $x, $y) = @_;
+
+    $self->current_x($x);
+    $self->current_y($y);
+}
+
+sub rel_move_to {
+    my ($self, $x, $y) = @_;
+
+    $self->current_x($self->current_x + $x);
+    $self->current_y($self->current_y + $y);
 }
 
 sub write {
@@ -70,19 +103,17 @@ sub _draw_component {
 
     my $bc = $comp->background_color;
     if(defined($bc)) {
-        my $o = $comp->origin;
-        my $ox = $o->x;
-        my $oy = $o->y;
 
         my ($mt, $mr, $mb, $ml) = $comp->margins->as_array;
         # GD's alpha is backward from Graphics::Color::RGB's...
         my $color = $gd->colorAllocateAlpha($bc->red * 255, $bc->green * 255, $bc->blue * 255, 127 - ($bc->alpha * 127));
-        # X,Y position is wrong?
+        $self->rel_move_to($mr, $mt);
+
         $gd->filledRectangle(
-            $ox + $mr,
-            $oy + $mt,
-            $ox + $comp->width - $mr - $ml,
-            $ox + $comp->height - $mt - $mb,
+            $self->current_x,
+            $self->current_y,
+            $self->current_x + $comp->width - $ml,
+            $self->current_y + $comp->height - $mb,
             $color
         );
     }
@@ -99,6 +130,105 @@ sub _draw_component {
     }
 }
 
+# sub _draw_complex_border {
+#     my ($self, $comp) = @_;
+# 
+#     my ($mt, $mr, $mb, $ml) = $comp->margins->as_array;
+# 
+#     my $gd = $self->gd;
+#     my $border = $comp->border;
+# 
+#     my $width = $comp->width;
+#     my $height = $comp->height;
+# 
+#     my $bt = $border->top;
+#     my $thalf = (defined($bt) && defined($bt->color))
+#         ? $bt->width / 2: 0;
+# 
+#     my $br = $border->right;
+#     my $rhalf = (defined($br) && defined($br->color))
+#         ? $br->width / 2: 0;
+# 
+#     my $bb = $border->bottom;
+#     my $bhalf = (defined($bb) && defined($bb->color))
+#         ? $bb->width / 2 : 0;
+# 
+#     my $bl = $border->left;
+#     my $lhalf = (defined($bl) && defined($bl->color))
+#         ? $bl->width / 2 : 0;
+# 
+#     my $o = $comp->origin;
+#     my $ox = $o->x;
+#     my $oy = $o->y;
+# 
+#     if($thalf) {
+#         $gd->line(
+#             $ml, $mt + $thalf
+#         );
+#         $context->move_to($ml, $mt + $thalf);
+#         $context->set_source_rgba($bt->color->as_array_with_alpha);
+# 
+#         $context->set_line_width($bt->width);
+#         $context->rel_line_to($width - $mr - $ml, 0);
+# 
+#         my $dash = $bt->dash_pattern;
+#         if(defined($dash) && scalar(@{ $dash })) {
+#             $context->set_dash(0, @{ $dash });
+#         }
+# 
+#         $context->stroke;
+# 
+#         $context->set_dash(0, []);
+#     }
+# 
+#     if($rhalf) {
+#         $context->move_to($width - $mr - $rhalf, $mt);
+#         $context->set_source_rgba($br->color->as_array_with_alpha);
+# 
+#         $context->set_line_width($br->width);
+#         $context->rel_line_to(0, $height - $mb);
+# 
+#         my $dash = $br->dash_pattern;
+#         if(defined($dash) && scalar(@{ $dash })) {
+#             $context->set_dash(0, @{ $dash });
+#         }
+# 
+#         $context->stroke;
+#         $context->set_dash(0, []);
+#     }
+# 
+#     if($bhalf) {
+#         $context->move_to($width - $mr, $height - $bhalf - $mb);
+#         $context->set_source_rgba($bb->color->as_array_with_alpha);
+# 
+#         $context->set_line_width($bb->width);
+#         $context->rel_line_to(-($width - $mb), 0);
+# 
+#         my $dash = $bb->dash_pattern;
+#         if(defined($dash) && scalar(@{ $dash })) {
+#             $context->set_dash(0, @{ $dash });
+#         }
+# 
+#         $context->stroke;
+#     }
+# 
+#     if($lhalf) {
+#         $context->move_to($ml + $lhalf, $mt);
+#         $context->set_source_rgba($bl->color->as_array_with_alpha);
+# 
+#         $context->set_line_width($bl->width);
+#         $context->rel_line_to(0, $height - $mb);
+# 
+#         my $dash = $bl->dash_pattern;
+#         if(defined($dash) && scalar(@{ $dash })) {
+#             $context->set_dash(0, @{ $dash });
+#         }
+# 
+#         $context->stroke;
+#         $context->set_dash(0, []);
+#     }
+# }
+
 sub _draw_simple_border {
     my ($self, $comp) = @_;
 
@@ -107,15 +237,11 @@ sub _draw_simple_border {
     my $border = $comp->border;
     my $top = $border->top;
     my $bswidth = $top->width;
-    my $o = $comp->origin;
-    my $ox = $o->x;
-    my $oy = $o->y;
-
-    print STDERR "WEEE\n";
 
     my $c = $comp->border->top->color;
-    my $color = $gd->colorAllocateAlpha($c->red * 255, $c->green * 255, $c->blue * 255, 127 - ($c->alpha * 127));
-    # $context->set_source_rgba($top->color->as_array_with_alpha);
+    my $color = $gd->colorAllocateAlpha(
+        $c->red * 255, $c->green * 255, $c->blue * 255, 127 - ($c->alpha * 127)
+    );
 
     my @margins = $comp->margins->as_array;
 
@@ -123,7 +249,6 @@ sub _draw_simple_border {
     # $context->set_line_cap($top->line_cap);
     # $context->set_line_join($top->line_join);
 
-    # $context->new_path;
     my $swhalf = $bswidth / 2;
     my $width = $comp->width;
     my $height = $comp->height;
@@ -145,10 +270,12 @@ sub _draw_simple_border {
         $gd->setStyle(@dash_style);
     }
 
+    $self->rel_move_to($margins[3], $margins[0]);
     $gd->rectangle(
-        $ox + $margins[3] + $swhalf, $oy + $margins[0] + $swhalf,
-        $ox + $width - $bswidth - $margins[3] - $margins[1] + $swhalf,
-        $oy + $height - $bswidth - $margins[2] - $margins[0] + $swhalf,
+        $self->current_x + $swhalf,
+        $self->current_y + $swhalf,
+        $self->current_x + $width - $bswidth - $margins[1] + $swhalf,
+        $self->current_y + $height - $bswidth - $margins[0] + $swhalf,
         gdStyled
     );
 }
