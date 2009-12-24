@@ -188,12 +188,6 @@ sub _draw_complex_border {
         ? $bl->width / 2 : 0;
 
     if($thalf) {
-       # my $color = $self->convert_color($bt->color);
-        my $x = $self->current_x + $ml;
-        print "X: $x\n";
-        my $y = $self->current_y + $mt + $thalf;
-        print "Y: $y\n";
-        print "W: ".$bt->width."\n";
         $self->set_style($bt);
         $gd->line(
             $self->current_x + $ml,
@@ -202,68 +196,40 @@ sub _draw_complex_border {
             $self->current_y + $mt + $thalf,
             gdStyled
         );
-        # $context->move_to($ml, $mt + $thalf);
-        # $context->set_source_rgba($bt->color->as_array_with_alpha);
-        # 
-        # $context->set_line_width($bt->width);
-        # $context->rel_line_to($width - $mr - $ml, 0);
-
-        # my $dash = $bt->dash_pattern;
-        # if(defined($dash) && scalar(@{ $dash })) {
-        #     $context->set_dash(0, @{ $dash });
-        # }
-
-        # $context->stroke;
-
-        # $context->set_dash(0, []);
     }
-# 
-#     if($rhalf) {
-#         $context->move_to($width - $mr - $rhalf, $mt);
-#         $context->set_source_rgba($br->color->as_array_with_alpha);
-# 
-#         $context->set_line_width($br->width);
-#         $context->rel_line_to(0, $height - $mb);
-# 
-#         my $dash = $br->dash_pattern;
-#         if(defined($dash) && scalar(@{ $dash })) {
-#             $context->set_dash(0, @{ $dash });
-#         }
-# 
-#         $context->stroke;
-#         $context->set_dash(0, []);
-#     }
-# 
-#     if($bhalf) {
-#         $context->move_to($width - $mr, $height - $bhalf - $mb);
-#         $context->set_source_rgba($bb->color->as_array_with_alpha);
-# 
-#         $context->set_line_width($bb->width);
-#         $context->rel_line_to(-($width - $mb), 0);
-# 
-#         my $dash = $bb->dash_pattern;
-#         if(defined($dash) && scalar(@{ $dash })) {
-#             $context->set_dash(0, @{ $dash });
-#         }
-# 
-#         $context->stroke;
-#     }
-# 
-#     if($lhalf) {
-#         $context->move_to($ml + $lhalf, $mt);
-#         $context->set_source_rgba($bl->color->as_array_with_alpha);
-# 
-#         $context->set_line_width($bl->width);
-#         $context->rel_line_to(0, $height - $mb);
-# 
-#         my $dash = $bl->dash_pattern;
-#         if(defined($dash) && scalar(@{ $dash })) {
-#             $context->set_dash(0, @{ $dash });
-#         }
-# 
-#         $context->stroke;
-#         $context->set_dash(0, []);
-#     }
+
+    if($rhalf) {
+        $self->set_style($br);
+        $gd->line(
+            $self->current_x + $width - $mr - $rhalf,
+            $self->current_y + $mt,
+            $self->current_x + $width - $mr - $rhalf,
+            $self->current_y + $mt + $height - $mb,
+            gdStyled
+        );
+    }
+
+    if($bhalf) {
+        $self->set_style($bb);
+        $gd->line(
+            $self->current_x + $width - $mr - $ml,
+            $self->current_y + $height - $mb - $mt - $bhalf,
+            $self->current_x - $ml,
+            $self->current_y + $height - $mb - $mt - $bhalf,
+            gdStyled
+        );
+    }
+
+    if($lhalf) {
+        $self->set_style($bl);
+        $gd->line(
+            $self->current_x + $ml + $lhalf,
+            $self->current_y + $mt,
+            $self->current_x + $ml + $lhalf,
+            $self->current_y + $height - $mt - $mb,
+            gdStyled
+        );
+    }
 }
 
 sub _draw_simple_border {
