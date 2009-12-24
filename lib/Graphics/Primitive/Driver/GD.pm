@@ -31,7 +31,6 @@ sub _draw_bezier {}
 sub _draw_circle {}
 sub _draw_ellipse {}
 sub _draw_line {}
-sub _draw_path {}
 sub _draw_polygon {}
 sub _draw_rectangle {}
 sub _draw_textbox {}
@@ -115,6 +114,20 @@ sub write {
     $fh->binmode;
     $fh->print($self->data);
     $fh->close;
+}
+
+sub _draw_arc {
+    my ($self, $comp) = @_;
+
+    print "ASDASD\n";
+
+    # No stroke!
+    my $gd = $self->gd;
+    $gd->ellipse(
+        $self->current_x, $self->current_y, 10, 0, 180, gdStyled
+        # $self->current_x, $self->current_y, $comp->radius,
+        # $comp->angle_start, $comp->angle_end, $comp->radius, gdStyled
+    );
 }
 
 sub _draw_canvas {
@@ -229,6 +242,62 @@ sub _draw_complex_border {
             $self->current_y + $height - $mt - $mb - 1,
             gdStyled
         );
+    }
+}
+
+sub _draw_path {
+    my ($self, $path, $op) = @_;
+
+    my $gd = $self->gd;
+
+    # If preserve count is set we've "preserved" a path that's made up 
+    # of X primitives.  Set the sentinel to the the count so we skip that
+    # many primitives
+    # my $pc = $self->_preserve_count;
+    # if($pc) {
+    #     $self->_preserve_count(0);
+    # } else {
+    #     $context->new_path;
+    # }
+
+    my $pcount = $path->primitive_count;
+    for(my $i = 0; $i < $pcount; $i++) {
+        my $prim = $path->get_primitive($i);
+        my $hints = $path->get_hint($i);
+
+        if(defined($hints)) {
+            unless($hints->{contiguous}) {
+                my $ps = $prim->point_start;
+                $self->move_to($ps->x, $ps->y);
+            }
+        }
+
+        # FIXME Check::ISA
+        if($prim->isa('Geometry::Primitive::Line')) {
+            $self->_draw_line($prim);
+        } elsif($prim->isa('Geometry::Primitive::Rectangle')) {
+            $self->_draw_rectangle($prim);
+        } elsif($prim->isa('Geometry::Primitive::Arc')) {
+            $self->_draw_arc($prim);
+        } elsif($prim->isa('Geometry::Primitive::Bezier')) {
+            $self->_draw_bezier($prim);
+        } elsif($prim->isa('Geometry::Primitive::Circle')) {
+            $self->_draw_circle($prim);
+        } elsif($prim->isa('Geometry::Primitive::Ellipse')) {
+            $self->_draw_ellipse($prim);
+        } elsif($prim->isa('Geometry::Primitive::Polygon')) {
+            $self->_draw_polygon($prim);
+        }
+    }
+
+    # if($op->isa('Graphics::Primitive::Operation::Stroke')) {
+    #     $self->_do_stroke($op);
+    # } elsif($op->isa('Graphics::Primitive::Operation::Fill')) {
+    #     $self->_do_fill($op);
+    # }
+
+    if($op->preserve) {
+        $self->_preserve_count($path->primitive_count);
     }
 }
 
