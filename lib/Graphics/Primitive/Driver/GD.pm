@@ -62,6 +62,17 @@ sub data {
     return $self->gd->png;
 }
 
+sub convert_color {
+    my ($self, $color) = @_;
+
+    return $self->gd->colorAllocateAlpha(
+        $color->red * 255,
+        $color->green * 255,
+        $color->blue * 255,
+        127 - ($color->alpha * 127)
+    );
+}
+
 sub move_to {
     my ($self, $x, $y) = @_;
 
@@ -74,6 +85,27 @@ sub rel_move_to {
 
     $self->current_x($self->current_x + $x);
     $self->current_y($self->current_y + $y);
+}
+
+sub set_style {
+    my ($self, $brush) = @_;
+
+    # Sets gdStyled to the dash pattern and sets the color
+    my $dash = $brush->dash_pattern;
+    my $color = $self->convert_color($brush->color);
+    $self->gd->setThickness($brush->width);
+
+    my @dash_style = ();
+    if(defined($dash) && scalar(@{ $dash })) {
+        foreach my $dc (@{ $dash }) {
+            for (0..$dc) {
+                push(@dash_style, $color);
+            }
+        }
+    } else {
+        @dash_style = ( $color );
+    }
+    $self->gd->setStyle(@dash_style);
 }
 
 sub write {
@@ -103,10 +135,9 @@ sub _draw_component {
 
     my $bc = $comp->background_color;
     if(defined($bc)) {
-
         my ($mt, $mr, $mb, $ml) = $comp->margins->as_array;
         # GD's alpha is backward from Graphics::Color::RGB's...
-        my $color = $gd->colorAllocateAlpha($bc->red * 255, $bc->green * 255, $bc->blue * 255, 127 - ($bc->alpha * 127));
+        my $color = $self->convert_color($bc);
         $self->rel_move_to($mr, $mt);
 
         $gd->filledRectangle(
@@ -255,20 +286,22 @@ sub _draw_simple_border {
     my $mx = $margins[3];
     my $my = $margins[1];
 
-    my $dash = $top->dash_pattern;
-    if(defined($dash) && scalar(@{ $dash })) {
-        my @dash_style = ();
-        foreach my $dc (@{ $dash }) {
-            for (0..$dc) {
-                push(@dash_style, $color);
-            }
-        }
-        $gd->setStyle(@dash_style);
-        # $context->set_dash(0, @{ $dash });
-    } else {
-        my @dash_style = ( $color );
-        $gd->setStyle(@dash_style);
-    }
+    $self->set_style($top);
+    # my $dash = $top->dash_pattern;
+    # if(defined($dash) && scalar(@{ $dash })) {
+    #     my @dash_style = ();
+    #     foreach my $dc (@{ $dash }) {
+    #         for (0..$dc) {
+    #             push(@dash_style, $color);
+    #         }
+    #     }
+    # 
+    #     $gd->setStyle(@dash_style);
+    #     # $context->set_dash(0, @{ $dash });
+    # } else {
+    #     my @dash_style = ( $color );
+    #     $gd->setStyle(@dash_style);
+    # }
 
     $self->rel_move_to($margins[3], $margins[0]);
     $gd->rectangle(
