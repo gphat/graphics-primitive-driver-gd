@@ -18,7 +18,6 @@ sub _do_stroke {}
 sub _draw_bezier {}
 sub _draw_circle {}
 sub _draw_complex_border {}
-sub _draw_simple_border {}
 sub _draw_ellipse {}
 sub _draw_line {}
 sub _draw_path {}
@@ -71,14 +70,19 @@ sub _draw_component {
 
     my $bc = $comp->background_color;
     if(defined($bc)) {
+        my $o = $comp->origin;
+        my $ox = $o->x;
+        my $oy = $o->y;
+
         my ($mt, $mr, $mb, $ml) = $comp->margins->as_array;
-        my $color = $gd->colorAllocateAlpha(255, 0, 0, 0); #$bc->red * 255, $bc->green * 255, $bc->blue * 255, $bc->alpha * 127);
+        # GD's alpha is backward from Graphics::Color::RGB's...
+        my $color = $gd->colorAllocateAlpha($bc->red * 255, $bc->green * 255, $bc->blue * 255, 127 - ($bc->alpha * 127));
         # X,Y position is wrong?
         $gd->filledRectangle(
-            $mr,
-            $mt,
-            $comp->width - $mr - $ml,
-            $comp->height - $mt - $mb,
+            $ox + $mr,
+            $oy + $mt,
+            $ox + $comp->width - $mr - $ml,
+            $ox + $comp->height - $mt - $mb,
             $color
         );
     }
@@ -93,6 +97,60 @@ sub _draw_component {
             $self->_draw_complex_border($comp);
         }
     }
+}
+
+sub _draw_simple_border {
+    my ($self, $comp) = @_;
+
+    my $gd = $self->gd;
+
+    my $border = $comp->border;
+    my $top = $border->top;
+    my $bswidth = $top->width;
+    my $o = $comp->origin;
+    my $ox = $o->x;
+    my $oy = $o->y;
+
+    print STDERR "WEEE\n";
+
+    my $c = $comp->border->top->color;
+    my $color = $gd->colorAllocateAlpha($c->red * 255, $c->green * 255, $c->blue * 255, 127 - ($c->alpha * 127));
+    # $context->set_source_rgba($top->color->as_array_with_alpha);
+
+    my @margins = $comp->margins->as_array;
+
+    $gd->setThickness($bswidth);
+    # $context->set_line_cap($top->line_cap);
+    # $context->set_line_join($top->line_join);
+
+    # $context->new_path;
+    my $swhalf = $bswidth / 2;
+    my $width = $comp->width;
+    my $height = $comp->height;
+    my $mx = $margins[3];
+    my $my = $margins[1];
+
+    my $dash = $top->dash_pattern;
+    if(defined($dash) && scalar(@{ $dash })) {
+        my @dash_style = ();
+        foreach my $dc (@{ $dash }) {
+            for (0..$dc) {
+                push(@dash_style, $color);
+            }
+        }
+        $gd->setStyle(@dash_style);
+        # $context->set_dash(0, @{ $dash });
+    } else {
+        my @dash_style = ( $color );
+        $gd->setStyle(@dash_style);
+    }
+
+    $gd->rectangle(
+        $ox + $margins[3] + $swhalf, $oy + $margins[0] + $swhalf,
+        $ox + $width - $bswidth - $margins[3] - $margins[1] + $swhalf,
+        $oy + $height - $bswidth - $margins[2] - $margins[0] + $swhalf,
+        gdStyled
+    );
 }
 
 __PACKAGE__->meta->make_immutable;

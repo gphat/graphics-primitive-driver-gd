@@ -10,7 +10,12 @@ my $c = Graphics::Primitive::Component->new(
       red => 1, green => 1, blue => 0, alpha => 1
   ),
   width => 500, height => 350,
-  border => new Graphics::Primitive::Border->new( width => 5 )
+  border => new Graphics::Primitive::Border->new(
+      color => Graphics::Color::RGB->new(
+          red => 1, green => 0, blue => 0, alpha => 1
+      ),
+      width => 5
+  )
 );
 
 my $driver = Graphics::Primitive::Driver::GD->new;
