@@ -29,7 +29,6 @@ sub _do_fill {}
 sub _do_stroke {}
 sub _draw_bezier {}
 sub _draw_circle {}
-sub _draw_complex_border {}
 sub _draw_ellipse {}
 sub _draw_line {}
 sub _draw_path {}
@@ -161,56 +160,63 @@ sub _draw_component {
     }
 }
 
-# sub _draw_complex_border {
-#     my ($self, $comp) = @_;
-# 
-#     my ($mt, $mr, $mb, $ml) = $comp->margins->as_array;
-# 
-#     my $gd = $self->gd;
-#     my $border = $comp->border;
-# 
-#     my $width = $comp->width;
-#     my $height = $comp->height;
-# 
-#     my $bt = $border->top;
-#     my $thalf = (defined($bt) && defined($bt->color))
-#         ? $bt->width / 2: 0;
-# 
-#     my $br = $border->right;
-#     my $rhalf = (defined($br) && defined($br->color))
-#         ? $br->width / 2: 0;
-# 
-#     my $bb = $border->bottom;
-#     my $bhalf = (defined($bb) && defined($bb->color))
-#         ? $bb->width / 2 : 0;
-# 
-#     my $bl = $border->left;
-#     my $lhalf = (defined($bl) && defined($bl->color))
-#         ? $bl->width / 2 : 0;
-# 
-#     my $o = $comp->origin;
-#     my $ox = $o->x;
-#     my $oy = $o->y;
-# 
-#     if($thalf) {
-#         $gd->line(
-#             $ml, $mt + $thalf
-#         );
-#         $context->move_to($ml, $mt + $thalf);
-#         $context->set_source_rgba($bt->color->as_array_with_alpha);
-# 
-#         $context->set_line_width($bt->width);
-#         $context->rel_line_to($width - $mr - $ml, 0);
-# 
-#         my $dash = $bt->dash_pattern;
-#         if(defined($dash) && scalar(@{ $dash })) {
-#             $context->set_dash(0, @{ $dash });
-#         }
-# 
-#         $context->stroke;
-# 
-#         $context->set_dash(0, []);
-#     }
+sub _draw_complex_border {
+    my ($self, $comp) = @_;
+
+    my ($mt, $mr, $mb, $ml) = $comp->margins->as_array;
+
+    my $gd = $self->gd;
+    my $border = $comp->border;
+
+    my $width = $comp->width;
+    my $height = $comp->height;
+
+    my $bt = $border->top;
+    my $thalf = (defined($bt) && defined($bt->color))
+        ? $bt->width / 2: 0;
+
+    my $br = $border->right;
+    my $rhalf = (defined($br) && defined($br->color))
+        ? $br->width / 2: 0;
+
+    my $bb = $border->bottom;
+    my $bhalf = (defined($bb) && defined($bb->color))
+        ? $bb->width / 2 : 0;
+
+    my $bl = $border->left;
+    my $lhalf = (defined($bl) && defined($bl->color))
+        ? $bl->width / 2 : 0;
+
+    if($thalf) {
+       # my $color = $self->convert_color($bt->color);
+        my $x = $self->current_x + $ml;
+        print "X: $x\n";
+        my $y = $self->current_y + $mt + $thalf;
+        print "Y: $y\n";
+        print "W: ".$bt->width."\n";
+        $self->set_style($bt);
+        $gd->line(
+            $self->current_x + $ml,
+            $self->current_y + $mt + $thalf,
+            $self->current_x + $width - $mr - $ml,
+            $self->current_y + $mt + $thalf,
+            gdStyled
+        );
+        # $context->move_to($ml, $mt + $thalf);
+        # $context->set_source_rgba($bt->color->as_array_with_alpha);
+        # 
+        # $context->set_line_width($bt->width);
+        # $context->rel_line_to($width - $mr - $ml, 0);
+
+        # my $dash = $bt->dash_pattern;
+        # if(defined($dash) && scalar(@{ $dash })) {
+        #     $context->set_dash(0, @{ $dash });
+        # }
+
+        # $context->stroke;
+
+        # $context->set_dash(0, []);
+    }
 # 
 #     if($rhalf) {
 #         $context->move_to($width - $mr - $rhalf, $mt);
@@ -258,7 +264,7 @@ sub _draw_component {
 #         $context->stroke;
 #         $context->set_dash(0, []);
 #     }
-# }
+}
 
 sub _draw_simple_border {
     my ($self, $comp) = @_;
@@ -287,21 +293,6 @@ sub _draw_simple_border {
     my $my = $margins[1];
 
     $self->set_style($top);
-    # my $dash = $top->dash_pattern;
-    # if(defined($dash) && scalar(@{ $dash })) {
-    #     my @dash_style = ();
-    #     foreach my $dc (@{ $dash }) {
-    #         for (0..$dc) {
-    #             push(@dash_style, $color);
-    #         }
-    #     }
-    # 
-    #     $gd->setStyle(@dash_style);
-    #     # $context->set_dash(0, @{ $dash });
-    # } else {
-    #     my @dash_style = ( $color );
-    #     $gd->setStyle(@dash_style);
-    # }
 
     $self->rel_move_to($margins[3], $margins[0]);
     $gd->rectangle(
