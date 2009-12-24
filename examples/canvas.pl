@@ -19,7 +19,7 @@ my $c = Graphics::Primitive::Canvas->new(
   )
 );
 $c->path->move_to(50, 50);
-$c->path->arc(20, 0, 3.14);
+$c->path->line_to(20, 0);
 $c->do(Graphics::Primitive::Operation::Stroke->new);
 
 my $driver = Graphics::Primitive::Driver::GD->new;

@@ -30,7 +30,6 @@ sub _do_stroke {}
 sub _draw_bezier {}
 sub _draw_circle {}
 sub _draw_ellipse {}
-sub _draw_line {}
 sub _draw_polygon {}
 sub _draw_rectangle {}
 sub _draw_textbox {}
@@ -118,8 +117,6 @@ sub write {
 
 sub _draw_arc {
     my ($self, $comp) = @_;
-
-    print "ASDASD\n";
 
     # No stroke!
     my $gd = $self->gd;
@@ -243,6 +240,14 @@ sub _draw_complex_border {
             gdStyled
         );
     }
+}
+
+sub _draw_line {
+    my ($self, $line) = @_;
+
+    my $gd = $self->gd;
+    my $end = $line->end;
+    $gd->line($self->current_x, $self->current_y, $end->x, $end->y, gdStyled);
 }
 
 sub _draw_path {
