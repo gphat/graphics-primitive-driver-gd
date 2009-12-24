@@ -142,8 +142,8 @@ sub _draw_component {
         $gd->filledRectangle(
             $self->current_x,
             $self->current_y,
-            $self->current_x + $comp->width - $ml,
-            $self->current_y + $comp->height - $mb,
+            $self->current_x + $comp->width - $ml - $mr - 1,
+            $self->current_y + $comp->height - $mb - $mt - 1,
             $color
         );
     }
@@ -190,10 +190,10 @@ sub _draw_complex_border {
     if($thalf) {
         $self->set_style($bt);
         $gd->line(
-            $self->current_x + $ml,
-            $self->current_y + $mt + $thalf,
-            $self->current_x + $width - $mr - $ml,
-            $self->current_y + $mt + $thalf,
+            $self->current_x,
+            $self->current_y + $thalf,
+            $self->current_x + $width - $mr - $ml - 1,
+            $self->current_y + $thalf,
             gdStyled
         );
     }
@@ -201,10 +201,10 @@ sub _draw_complex_border {
     if($rhalf) {
         $self->set_style($br);
         $gd->line(
-            $self->current_x + $width - $mr - $rhalf,
-            $self->current_y + $mt,
-            $self->current_x + $width - $mr - $rhalf,
-            $self->current_y + $mt + $height - $mb,
+            $self->current_x + $width - $mr - $ml - $rhalf,
+            $self->current_y,
+            $self->current_x + $width - $mr - $ml - $rhalf,
+            $self->current_y + $height - $mb - $mt - 1,
             gdStyled
         );
     }
@@ -212,9 +212,9 @@ sub _draw_complex_border {
     if($bhalf) {
         $self->set_style($bb);
         $gd->line(
-            $self->current_x + $width - $mr - $ml,
+            $self->current_x + $width - $mr - $ml - 1,
             $self->current_y + $height - $mb - $mt - $bhalf,
-            $self->current_x - $ml,
+            $self->current_x,
             $self->current_y + $height - $mb - $mt - $bhalf,
             gdStyled
         );
@@ -223,10 +223,10 @@ sub _draw_complex_border {
     if($lhalf) {
         $self->set_style($bl);
         $gd->line(
-            $self->current_x + $ml + $lhalf,
-            $self->current_y + $mt,
-            $self->current_x + $ml + $lhalf,
-            $self->current_y + $height - $mt - $mb,
+            $self->current_x + $lhalf,
+            $self->current_y,
+            $self->current_x + $lhalf,
+            $self->current_y + $height - $mt - $mb - 1,
             gdStyled
         );
     }
@@ -249,8 +249,6 @@ sub _draw_simple_border {
     my @margins = $comp->margins->as_array;
 
     $gd->setThickness($bswidth);
-    # $context->set_line_cap($top->line_cap);
-    # $context->set_line_join($top->line_join);
 
     my $swhalf = $bswidth / 2;
     my $width = $comp->width;

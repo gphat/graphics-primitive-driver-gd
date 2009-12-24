@@ -29,6 +29,11 @@ $c->border->top->color(
 );
 $c->border->top->width(2);
 
+$c->margins->bottom(5);
+$c->margins->left(5);
+$c->margins->right(5);
+$c->margins->top(5);
+
 my $driver = Graphics::Primitive::Driver::GD->new;
 
 $driver->prepare($c);
