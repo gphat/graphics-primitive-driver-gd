@@ -27,10 +27,7 @@ has 'gd' => (
 );
 
 sub _do_fill {}
-sub _do_stroke {}
 sub _draw_bezier {}
-sub _draw_circle {}
-sub _draw_ellipse {}
 sub _draw_polygon {}
 sub _draw_rectangle {}
 sub _draw_textbox {}
@@ -119,6 +116,15 @@ sub write {
     $fh->close;
 }
 
+sub _do_stroke {
+    my ($self, $op) = @_;
+
+    my $gd = $self->gd;
+
+    print $op->brush->width."\n";
+    $self->set_style($op->brush);
+}
+
 sub _draw_arc {
     my ($self, $comp) = @_;
 
@@ -138,6 +144,17 @@ sub _draw_canvas {
     foreach (@{ $comp->paths }) {
         $self->_draw_path($_->{path}, $_->{op});
     }
+}
+
+sub _draw_circle {
+    my ($self, $comp) = @_;
+
+    # No stroke!
+    my $gd = $self->gd;
+    $gd->ellipse(
+        $self->current_x, $self->current_y, $comp->radius, $comp->radius,
+        gdStyled
+    );
 }
 
 sub _draw_component {
@@ -245,6 +262,17 @@ sub _draw_complex_border {
     }
 }
 
+sub _draw_ellipse {
+    my ($self, $comp) = @_;
+
+    # No stroke!
+    my $gd = $self->gd;
+    $gd->ellipse(
+        $self->current_x, $self->current_y, $comp->width, $comp->height,
+        gdStyled
+    );
+}
+
 sub _draw_line {
     my ($self, $line) = @_;
 
@@ -258,6 +286,13 @@ sub _draw_path {
     my ($self, $path, $op) = @_;
 
     my $gd = $self->gd;
+
+    if($op->isa('Graphics::Primitive::Operation::Stroke')) {
+        $self->_do_stroke($op);
+    # } elsif($op->isa('Graphics::Primitive::Operation::Fill')) {
+    #     $self->_do_fill($op);
+    }
+
 
     # If preserve count is set we've "preserved" a path that's made up 
     # of X primitives.  Set the sentinel to the the count so we skip that
@@ -298,12 +333,6 @@ sub _draw_path {
             $self->_draw_polygon($prim);
         }
     }
-
-    # if($op->isa('Graphics::Primitive::Operation::Stroke')) {
-    #     $self->_do_stroke($op);
-    # } elsif($op->isa('Graphics::Primitive::Operation::Fill')) {
-    #     $self->_do_fill($op);
-    # }
 
     if($op->preserve) {
         $self->_preserve_count($path->primitive_count);

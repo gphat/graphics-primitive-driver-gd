@@ -20,9 +20,14 @@ my $c = Graphics::Primitive::Canvas->new(
 );
 $c->path->move_to(50, 50);
 $c->path->line_to(20, 0);
-$c->arc(50, 0, 6.28, 1);
+$c->arc(50, 0, 1.14, 1);
+$c->path->ellipse(40, 100, 1);
 
-$c->do(Graphics::Primitive::Operation::Stroke->new);
+my $stroke = Graphics::Primitive::Operation::Stroke->new;
+$stroke->brush->color(Graphics::Color::RGB->new(blue => 0, red => 0.3));
+$stroke->brush->width(3);
+
+$c->do($stroke);
 
 my $driver = Graphics::Primitive::Driver::GD->new;
 
