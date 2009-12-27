@@ -4,6 +4,7 @@ use Moose;
 our $VERSION = '0.01';
 
 use GD;
+use Graphics::Primitive::Driver::GD::TextLayout;
 use Math::Trig qw(rad2deg);
 
 with 'Graphics::Primitive::Driver';
@@ -31,16 +32,16 @@ has 'gd' => (
     lazy_build => 1
 );
 
-sub _draw_textbox {}
 sub _finish_page {}
 sub _resize {}
-sub get_textbox_layout {}
 sub reset {}
 
 sub _build_gd {
     my ($self) = @_;
 
-    return GD::Image->new($self->width, $self->height, 1);
+    my $gd = GD::Image->new($self->width, $self->height, 1);
+    $gd->useFontConfig(1);
+    return $gd;
 }
 
 before('draw', sub {
@@ -66,6 +67,50 @@ sub convert_color {
         $color->blue * 255,
         127 - ($color->alpha * 127)
     );
+}
+
+sub get_text_bounding_box {
+    my ($self, $tb, $text) = @_;
+
+    my $gd = $self->gd;
+
+    my $font = $tb->font;
+
+    unless(defined($text)) {
+        $text = $tb->text;
+    }
+
+    my @bounds = GD::Image->stringFT(
+        $self->convert_color($tb->color),
+        $font->face,
+        $font->size,
+        $tb->angle ? $tb->angle : 0,
+        0, 0,
+        $text
+    );
+
+    my $tbr = Geometry::Primitive::Rectangle->new(
+        origin  => Geometry::Primitive::Point->new(
+            x => 0,
+            y => 0,
+        ),
+        width   => $bounds[4],
+        height  => $bounds[1]
+    );
+
+    my $cb = $tbr;
+
+    return ($cb, $tbr);
+}
+
+sub get_textbox_layout {
+    my ($self, $comp) = @_;
+
+    my $tl = Graphics::Primitive::Driver::GD::TextLayout->new(
+        component => $comp
+    );
+    $tl->layout($self);
+    return $tl;
 }
 
 sub move_to {
@@ -449,6 +494,82 @@ sub _draw_simple_border {
         $self->current_y + $height - $bswidth - $margins[0] + $swhalf,
         gdStyled
     );
+}
+
+sub _draw_textbox {
+    my ($self, $comp) = @_;
+
+    return unless defined($comp->text);
+
+    $self->_draw_component($comp);
+
+    my $bbox = $comp->inside_bounding_box;
+
+    my $height = $bbox->height;
+    my $height2 = $height / 2;
+    my $width = $bbox->width;
+    my $width2 = $width / 2;
+
+    my $halign = $comp->horizontal_alignment;
+    my $valign = $comp->vertical_alignment;
+
+    my $gd = $self->gd;
+
+    my $font = $comp->font;
+    my $fsize = $font->size;
+
+    my $lh = $comp->line_height;
+    $lh = $fsize unless(defined($lh));
+
+    my $yaccum = $bbox->origin->y;
+
+    foreach my $line (@{ $comp->layout->lines }) {
+        my $text = $line->{text};
+        my $tbox = $line->{box};
+
+        my $o = $tbox->origin;
+        my $bbo = $bbox->origin;
+        my $twidth = $tbox->width;
+        my $theight = $tbox->height;
+
+        my $x = $bbox->origin->x + $o->x;
+
+        my $ydiff = $theight + $o->y;
+        my $xdiff = $twidth + $o->x;
+
+        my $realh = $theight + $ydiff;
+        my $realw = $twidth + $xdiff;
+        my $theight2 = $realh / 2;
+        my $twidth2 = $twidth / 2;
+
+        my $y = $yaccum + $theight;
+
+        if($halign eq 'right') {
+            $x += $width - $twidth;
+        } elsif($halign eq 'center') {
+            $x += $width2 - $twidth2;
+        }
+
+        if($valign eq 'bottom') {
+            $y = $height - $ydiff;
+        } elsif($valign eq 'center') {
+            $y += $height2 - $theight2;
+        } else {
+            $y += $lh;
+        }
+
+        $gd->stringFT(
+            gdStyled,
+            # $self->convert_color($comp->color),
+            $font->face,
+            $fsize,
+            $comp->angle ? $comp->angle : 0,
+            $x, $y,
+            $text
+        );
+
+        $yaccum += $lh;
+    }
 }
 
 __PACKAGE__->meta->make_immutable;
