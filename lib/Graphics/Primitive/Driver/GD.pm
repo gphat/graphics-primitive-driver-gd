@@ -138,10 +138,17 @@ sub _draw_arc {
 
     # No stroke!
     my $gd = $self->gd;
-    $gd->arc(
-        $self->current_x, $self->current_y, $comp->radius, $comp->radius,
-        rad2deg($comp->angle_start), rad2deg($comp->angle_end), gdStyled
-    );
+    if($self->fill_mode) {
+        $gd->filledArc(
+            $self->current_x, $self->current_y, $comp->radius, $comp->radius,
+            rad2deg($comp->angle_start), rad2deg($comp->angle_end), gdStyled
+        );
+    } else {
+        $gd->arc(
+            $self->current_x, $self->current_y, $comp->radius, $comp->radius,
+            rad2deg($comp->angle_start), rad2deg($comp->angle_end), gdStyled
+        );
+    }
 }
 
 sub _draw_bezier {
