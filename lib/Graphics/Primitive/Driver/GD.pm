@@ -578,18 +578,37 @@ __PACKAGE__->meta->make_immutable;
 
 =head1 NAME
 
-Graphics::Primitive::Driver::GD - The great new Graphics::Primitive::Driver::GD!
+Graphics::Primitive::Driver::GD - GD driver for Graphics::Primitive
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
+    use Graphics::Primitive::Component;
     use Graphics::Primitive::Driver::GD;
 
-    my $foo = Graphics::Primitive::Driver::GD->new();
-    ...
+    my $container = Graphics::Primitive::Container->new(
+        width => $form->sheet_width,
+        height => $form->sheet_height
+    );
+    $container->border->width(1);
+    $container->border->color($black);
+    $container->padding(
+        Graphics::Primitive::Insets->new(top => 5, bottom => 5, left => 5, right => 5)
+    );
+    my $comp = Graphics::Primitive::Component->new;
+    $comp->background_color($black);
+    $container->add_component($comp, 'c');
+
+    my $lm = Layout::Manager::Compass->new;
+    $lm->do_layout($container);
+
+    my $driver = Graphics::Primitive::Driver::GD->new;
+    $driver->draw($container);
+    $driver->write('/Users/gphat/foo.png');
+
+=head1 WARNING
+
+This module is in it's early stages and does not work properly.  It will be
+improved shortly.
 
 =head1 AUTHOR
 
