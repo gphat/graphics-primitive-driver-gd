@@ -31,7 +31,6 @@ has 'gd' => (
     lazy_build => 1
 );
 
-sub _draw_polygon {}
 sub _draw_rectangle {}
 sub _draw_textbox {}
 sub _finish_page {}
@@ -372,6 +371,22 @@ sub _draw_path {
 
     if($op->preserve) {
         $self->_preserve_count($path->primitive_count);
+    }
+}
+
+sub _draw_polygon {
+    my ($self, $comp) = @_;
+
+    my $gd = $self->gd;
+    my $poly = GD::Polygon->new;
+    for(my $i = 1; $i < $poly->point_count; $i++) {
+        my $p = $poly->get_point($i);
+        $poly->addPto($p->x, $p->y);
+    }
+    if($self->fill_mode) {
+        $gd->filledPolygon($poly, gdStyled);
+    } else {
+        $gd->openPolygon($poly, gdStyled);
     }
 }
 
