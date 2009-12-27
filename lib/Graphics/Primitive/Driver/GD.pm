@@ -31,7 +31,6 @@ has 'gd' => (
     lazy_build => 1
 );
 
-sub _draw_rectangle {}
 sub _draw_textbox {}
 sub _finish_page {}
 sub _resize {}
@@ -387,6 +386,23 @@ sub _draw_polygon {
         $gd->filledPolygon($poly, gdStyled);
     } else {
         $gd->openPolygon($poly, gdStyled);
+    }
+}
+
+sub _draw_rectangle {
+    my ($self, $comp) = @_;
+
+    my $gd = $self->gd;
+    if($self->fill_mode) {
+        $gd->filledRectangle(
+            $comp->origin->x, $comp->origin->y,
+            $comp->origin->x + $comp->width, $comp->origin->y + $comp->height
+        );
+    } else {
+        $gd->rectangle(
+            $comp->origin->x, $comp->origin->y,
+            $comp->origin->x + $comp->width, $comp->origin->y + $comp->height
+        );
     }
 }
 
