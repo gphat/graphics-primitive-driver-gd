@@ -1,4 +1,4 @@
-package Graphics::Primitive::Driver::GD;
+d ~package Graphics::Primitive::Driver::GD;
 use Moose;
 
 our $VERSION = '0.01';
@@ -20,14 +20,17 @@ has 'current_y' => (
     default => 0
 );
 
+has 'fill_mode' => (
+    is => 'rw',
+    isa => 'Bool'
+);
+
 has 'gd' => (
     is => 'ro',
     isa => 'GD::Image',
     lazy_build => 1
 );
 
-sub _do_fill {}
-sub _draw_bezier {}
 sub _draw_polygon {}
 sub _draw_rectangle {}
 sub _draw_textbox {}
@@ -120,8 +123,15 @@ sub _do_stroke {
     my ($self, $op) = @_;
 
     my $gd = $self->gd;
+    $self->fill_mode(0);
 
-    print $op->brush->width."\n";
+    $self->set_style($op->brush);
+}
+
+sub _do_fill {
+    my ($self, $op) = @_;
+    $self->fill_mode(1);
+
     $self->set_style($op->brush);
 }
 
@@ -134,6 +144,18 @@ sub _draw_arc {
         $self->current_x, $self->current_y, $comp->radius, $comp->radius,
         rad2deg($comp->angle_start), rad2deg($comp->angle_end), gdStyled
     );
+}
+
+sub _draw_bezier {
+    my ($self, $bezier) = @_;
+
+    my $context = $self->cairo;
+    my $start = $bezier->start;
+    my $end = $bezier->end;
+    my $c1 = $bezier->control1;
+    my $c2 = $bezier->control2;
+
+    $context->curve_to($c1->x, $c1->y, $c2->x, $c2->y, $end->x, $end->y);
 }
 
 sub _draw_canvas {
@@ -151,10 +173,17 @@ sub _draw_circle {
 
     # No stroke!
     my $gd = $self->gd;
-    $gd->ellipse(
-        $self->current_x, $self->current_y, $comp->radius, $comp->radius,
-        gdStyled
-    );
+    if($self->fill_mode) {
+        $gd->filledEllipse(
+            $self->current_x, $self->current_y, $comp->radius, $comp->radius,
+            gdStyled
+        );
+    } else {
+        $gd->ellipse(
+            $self->current_x, $self->current_y, $comp->radius, $comp->radius,
+            gdStyled
+        );
+    }
 }
 
 sub _draw_component {
@@ -267,10 +296,17 @@ sub _draw_ellipse {
 
     # No stroke!
     my $gd = $self->gd;
-    $gd->ellipse(
-        $self->current_x, $self->current_y, $comp->width, $comp->height,
-        gdStyled
-    );
+    if($self->fill_mode) {
+        $gd->filledEllipse(
+            $self->current_x, $self->current_y, $comp->width, $comp->height,
+            gdStyled
+        );
+    } else {
+        $gd->ellipse(
+            $self->current_x, $self->current_y, $comp->width, $comp->height,
+            gdStyled
+        );
+    }
 }
 
 sub _draw_line {
@@ -289,8 +325,8 @@ sub _draw_path {
 
     if($op->isa('Graphics::Primitive::Operation::Stroke')) {
         $self->_do_stroke($op);
-    # } elsif($op->isa('Graphics::Primitive::Operation::Fill')) {
-    #     $self->_do_fill($op);
+    } elsif($op->isa('Graphics::Primitive::Operation::Fill')) {
+        $self->_do_fill($op);
     }
 
 
