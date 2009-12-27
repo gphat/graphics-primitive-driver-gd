@@ -1,4 +1,4 @@
-d ~package Graphics::Primitive::Driver::GD;
+package Graphics::Primitive::Driver::GD;
 use Moose;
 
 our $VERSION = '0.01';
@@ -34,7 +34,6 @@ has 'gd' => (
 sub _draw_textbox {}
 sub _finish_page {}
 sub _resize {}
-
 sub get_textbox_layout {}
 sub reset {}
 
@@ -130,7 +129,10 @@ sub _do_fill {
     my ($self, $op) = @_;
     $self->fill_mode(1);
 
-    $self->set_style($op->brush);
+    # XX Only works for Solid...
+    $self->set_style(Graphics::Primitive::Brush->new(
+        color => $op->paint->color,
+    ));
 }
 
 sub _draw_arc {
