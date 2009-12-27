@@ -9,7 +9,7 @@ build_requires 'Test::More';
 
 requires 'GD' => '2.44';
 requires 'Graphics::Primitive' => '0.47';
-requires 'Math::Trig' => '1.56';
+requires 'Math::Complex' => '1.56';
 requires 'Text::Flow' => '0.01';
 
 WriteAll;
