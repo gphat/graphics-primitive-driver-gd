@@ -450,12 +450,14 @@ sub _draw_rectangle {
     if($self->fill_mode) {
         $gd->filledRectangle(
             $comp->origin->x, $comp->origin->y,
-            $comp->origin->x + $comp->width, $comp->origin->y + $comp->height
+            $comp->origin->x + $comp->width, $comp->origin->y + $comp->height,
+            gdStyled
         );
     } else {
         $gd->rectangle(
             $comp->origin->x, $comp->origin->y,
-            $comp->origin->x + $comp->width, $comp->origin->y + $comp->height
+            $comp->origin->x + $comp->width, $comp->origin->y + $comp->height,
+            gdStyled
         );
     }
 }
