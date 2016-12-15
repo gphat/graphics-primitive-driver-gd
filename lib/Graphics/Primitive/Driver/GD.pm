@@ -1,7 +1,7 @@
 package Graphics::Primitive::Driver::GD;
 use Moose;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use GD;
 use Graphics::Primitive::Driver::GD::TextLayout;
